@@ -39,9 +39,14 @@ namespace BuggyBunny
 
             //Read in sound offset and size
             uint offsetSound = FindUintOffset(meta, 0x1002D2E);
-            meta.BaseStream.Position = offsetSound + 0xD; //HARDCODED!
-            fileInfo += offsetSound.ToString("X8") + ","; //Write offset to info file
-            entry sound = new entry(meta.ReadUInt32(), meta.ReadUInt32());
+            entry sound = null;
+            if (offsetSound != 0)
+            {
+                meta.BaseStream.Position = offsetSound + 0xD; //HARDCODED!
+                fileInfo += offsetSound.ToString("X8") + ","; //Write offset to info file
+                sound = new entry(meta.ReadUInt32(), meta.ReadUInt32());
+            }
+            else fileInfo += offsetSound.ToString("X8") + ","; //Write offset to info file
 
             //Read in texture table
             uint offsetImage = FindUintOffset(meta, 0x2A292D2E);
@@ -87,8 +92,11 @@ namespace BuggyBunny
             //Three bytes at the end
             File.WriteAllBytes(basePath + "endbytes.bin", data.ReadBytes(3));
             //Sound
-            data.BaseStream.Position = sound.offset;
-            File.WriteAllBytes(basePath + "sound.bin", data.ReadBytes((int)sound.length));
+            if (offsetSound != 0)
+            {
+                data.BaseStream.Position = sound.offset;
+                File.WriteAllBytes(basePath + "sound.bin", data.ReadBytes((int)sound.length));
+            }
             //Info file
             File.WriteAllText(basePath + "fileInfo.csv", fileInfo);
 
@@ -110,8 +118,12 @@ namespace BuggyBunny
             BinaryWriter bw = new BinaryWriter(File.Create(Path.GetDirectoryName(textBox2.Text) + "\\" + Path.GetFileNameWithoutExtension(textBox2.Text) + ".bin"));
 
             //Write sounds
-            bw.Write(File.ReadAllBytes(basePath + "sound.bin")); //Sound file should be an exact multiple of 16 in size, thus 4-byte aligned by default
-            uint soundLength = (uint)bw.BaseStream.Position; //A hacky way to get the size of the file
+            uint soundLength = 0;
+            if (Convert.ToUInt32(fileInfo[2], 16) != 0)
+            {
+                bw.Write(File.ReadAllBytes(basePath + "sound.bin")); //Sound file should be an exact multiple of 16 in size, thus 4-byte aligned by default
+                soundLength = (uint)bw.BaseStream.Position; //A hacky way to get the size of the file
+            }
 
             //Pack up the texts
             uint[] textLengths = new uint[6];
@@ -176,8 +188,11 @@ namespace BuggyBunny
                 metaOffset += 4;
             }
             //Sound
-            metaOffset = Convert.ToUInt32(fileInfo[2], 16) + 0x11;
-            WriteUIntToByteArray(meta, metaOffset, soundLength);
+            if (Convert.ToUInt32(fileInfo[2], 16) != 0)
+            {
+                metaOffset = Convert.ToUInt32(fileInfo[2], 16) + 0x11;
+                WriteUIntToByteArray(meta, metaOffset, soundLength);
+            }
             //Images
             metaOffset = Convert.ToUInt32(fileInfo[3], 16) + 0x3;
             for (uint i = 0; i < imageCountOrig; i++)
@@ -223,7 +238,8 @@ namespace BuggyBunny
             }
             catch
             {
-                throw new Exception("Couldn't find section! Aborting!");
+                //throw new Exception("Couldn't find section! Aborting!");
+                return 0; //Return 0 because an offset should never be 0
             }
         }
 

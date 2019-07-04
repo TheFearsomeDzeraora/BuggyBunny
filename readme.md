@@ -23,5 +23,5 @@ Program for unpacking contents of .bzz files found in Bugs Bunny Lost in Time (a
 
 #### Credits:
 * __Denim__ - for writing toolBZZ and allowing it to be distributed with my app
-* __rubinho146__ - for getting me involved and walking me through basic stuff like if I were a noob (and I were in PlayStation hacking) and also being an awesome friend XD
+* __rubinho146__ - for getting me involved and walking me through basic stuff like if I were a noob (and I were in PlayStation hacking), doing most of the beta testing and also being an awesome friend XD
 * __TheFearsomeDzeraora/CHEMI6DER__ - writing this abomination of a program, crappy code and awful GUI are included as usual
