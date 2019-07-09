@@ -67,19 +67,28 @@ namespace BuggyBunny
             //Texts
             for (uint i = 0; i < 6; i++) //HARDCODED!
             {
-                uint count = 0;
+                if (!Directory.Exists(basePath + "texts\\lang_" + i)) Directory.CreateDirectory(basePath + "texts\\lang_" + i);
+                //uint count = 0;
                 data.BaseStream.Position = texts[i].offset;
-                data.BaseStream.Position += data.ReadUInt16();
+                var offset = data.ReadUInt16();
+                List<ushort> offsets = new List<ushort>();
+                offsets.Add(offset);
+                for (int x = 0; x < (offset / 2) - 1; x++) offsets.Add(data.ReadUInt16());
+                offsets.Sort();
+                //data.BaseStream.Position += offset - 2;
 
-                while (data.BaseStream.Position < (texts[i].offset + texts[i].length))
+                //while (data.BaseStream.Position < (texts[i].offset + texts[i].length))
+                for (int x = 0; x < offset / 2; x++)
                 {
-                    if (!Directory.Exists(basePath + "texts\\lang_" + i)) Directory.CreateDirectory(basePath + "texts\\lang_" + i);
-
+                    data.BaseStream.Position = texts[i].offset + offsets[x];
+                    
                     if (data.ReadByte() != 0x0)
                     {
                         data.BaseStream.Position -= 1;
-                        File.WriteAllBytes(basePath + "texts\\lang_" + i + "\\" + count + ".txt", Program.ReadNullTerminatedAsciiStringFromBr2(data));
-                        count++;
+                        //File.WriteAllBytes(basePath + "texts\\lang_" + i + "\\" + x + ".txt", Program.ReadNullTerminatedAsciiStringFromBr2(data));
+                        if (x != (offset / 2) - 1) File.WriteAllBytes(basePath + "texts\\lang_" + i + "\\" + x + ".txt", data.ReadBytes(offsets[x + 1] - offsets[x] - 1));
+                        else File.WriteAllBytes(basePath + "texts\\lang_" + i + "\\" + x + ".txt", data.ReadBytes((int)((texts[i].offset + texts[i].length) - (texts[i].offset + offsets[x]) - 1)));
+                        //count++;
                     }
                 }
             }
